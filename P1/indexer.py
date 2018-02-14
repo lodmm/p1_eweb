@@ -29,6 +29,7 @@ corpus = args.c
 if corpus == "moocs" :
 	# indexer for moocs
 	jmoocs = json.loads(open(moocs).read())
+	n=len(jmoocs)
 	for x in jmoocs:
 		dt = tknzr.tokenize(x["description"] + x["title"])
 		dt = [i for i in dt if i not in stop]
@@ -45,14 +46,17 @@ if corpus == "moocs" :
 				indexer[y] = data.copy()	
 				
 		id.clear()
-		data.clear()	
-	with open('indices/moocs_indexer.dat', 'wb') as f:
+		data.clear()
+	indexer['M'] = n	
+	with open('indices/moocs_indexer.dat', 'w') as f:
 		pickle.dump(indexer, f, pickle.HIGHEST_PROTOCOL)
 		
 elif corpus == "cf" :
 	# indexer for cf
+	n = 0
 	for c in cf:
 		jcf = json.loads(open(c).read())
+		n = n+len(jcf)
 		for x in jcf:
 			authors = x.get("authors", '')
 			mS = x.get("majorSubjects", '')
@@ -80,8 +84,9 @@ elif corpus == "cf" :
 					indexer[y] = data.copy()	
 					
 		id.clear()
-		data.clear()	
-	with open('indices/cf_indexer.dat', 'wb') as f:
+		data.clear()
+	indexer['M'] = n	
+	with open('indices/cf_indexer.dat', 'w') as f:
 		pickle.dump(indexer, f, pickle.HIGHEST_PROTOCOL)	
 
 		
