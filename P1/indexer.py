@@ -3,6 +3,7 @@ import json
 import nltk
 import collections
 import pickle
+import argparse
 
 from collections import Counter
 from nltk.tokenize import RegexpTokenizer
@@ -19,10 +20,13 @@ indexer = dict()
 id = dict()
 data = dict()
 jcf = []
-if len(sys.argv) != 3:
-	print ("Error: missing corpus, indexer -c [moocs|cf]")
-	sys.exit(1)
-if (sys.argv[1]+" "+sys.argv[2]) == "-c moocs" :
+
+parser = argparse.ArgumentParser(description="indexer")
+parser.add_argument("-c", choices=["moocs", "cf"], help="select corpus", required=True)
+args = parser.parse_args()
+corpus = args.c
+
+if corpus == "moocs" :
 	# indexer for moocs
 	jmoocs = json.loads(open(moocs).read())
 	for x in jmoocs:
@@ -45,7 +49,7 @@ if (sys.argv[1]+" "+sys.argv[2]) == "-c moocs" :
 	with open('indices/moocs_indexer.dat', 'wb') as f:
 		pickle.dump(indexer, f, pickle.HIGHEST_PROTOCOL)
 		
-elif (sys.argv[1]+" "+sys.argv[2] ) == "-c cf" :
+elif corpus == "cf" :
 	# indexer for cf
 	for c in cf:
 		jcf = json.loads(open(c).read())
@@ -79,7 +83,5 @@ elif (sys.argv[1]+" "+sys.argv[2] ) == "-c cf" :
 		data.clear()	
 	with open('indices/cf_indexer.dat', 'wb') as f:
 		pickle.dump(indexer, f, pickle.HIGHEST_PROTOCOL)	
-else:
-	print ("Error: introduce a valid corpus, indexer -c [moocs|cf]")
-	sys.exit(1)
+
 		
