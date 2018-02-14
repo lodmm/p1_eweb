@@ -73,14 +73,14 @@ elif corpus == "cf" :
 			dt = [i for i in dt if i not in stop]	
 			for y in dt:
 				if y not in indexer:
-					id[x["paperNum"]] = 1
+					id[x["recordNum"]] = 1
 					indexer[y] = id.copy()	
 				else:
 					data = indexer.get(y)
-					if x["paperNum"] in data:
-						data[x["paperNum"]] = data.get(x["paperNum"]) +1
+					if x["recordNum"] in data:
+						data[x["recordNum"]] = data.get(x["recordNum"]) +1
 					else:
-						data[x["paperNum"]] = 1
+						data[x["recordNum"]] = 1
 					indexer[y] = data.copy()	
 					
 		id.clear()
