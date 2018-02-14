@@ -48,7 +48,7 @@ if corpus == "moocs" :
 		id.clear()
 		data.clear()
 	indexer['M'] = n	
-	with open('indices/moocs_indexer.dat', 'w') as f:
+	with open('indices/moocs_indexer.dat', 'wb') as f:
 		pickle.dump(indexer, f, pickle.HIGHEST_PROTOCOL)
 		
 elif corpus == "cf" :
@@ -86,7 +86,7 @@ elif corpus == "cf" :
 		id.clear()
 		data.clear()
 	indexer['M'] = n	
-	with open('indices/cf_indexer.dat', 'w') as f:
+	with open('indices/cf_indexer.dat', 'wb') as f:
 		pickle.dump(indexer, f, pickle.HIGHEST_PROTOCOL)	
 
 		
