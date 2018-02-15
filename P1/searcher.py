@@ -75,8 +75,8 @@ def singleQuery(query, corpus):
 	relevantDocuments, M = getRelevantDocs(set(processedQuery), corpus)
 
 	if not relevantDocuments:
-		# There aren't any relevant documents for the query
-		pass
+		# There isn't any relevant document for the query
+		return relevantDocuments
 	else:
 		# Calculating relevance score
 		scoredDocuments = {}
@@ -87,7 +87,7 @@ def singleQuery(query, corpus):
 
 			for documentID,numOfWords in value.items():
 				score = numOfWords*processedQuery.count(key)*math.log10((M + 1)/df)
-				# Updating score for document
+				# Updating score of document
 				if documentID in scoredDocuments:
 					lastScore = scoredDocuments[documentID]
 					scoredDocuments[documentID] = lastScore + score
@@ -193,18 +193,21 @@ else:
 if query != "f":
 	
 	resultDocs = singleQuery(query, corpus)
-	totalResults = len(resultDocs)
+	if not resultDocs:
+		print("There isn't any relevant document for this query.")
+	else:
+		totalResults = len(resultDocs)
 
-	# Get name of all relevant docs
-	if len(resultDocs) > 10:
-		resultDocs = resultDocs[:11]
-	docsWithNames = getDocumentsName(corpus, resultDocs)
-	
-	# Print relevant docs (document identifier, title, and at the end the number of relevant docs obtained)
-	for identifier in resultDocs:
-		print(identifier, " - ", docsWithNames[identifier])
+		# Get name of all relevant docs
+		if len(resultDocs) > 10:
+			resultDocs = resultDocs[:11]
+		docsWithNames = getDocumentsName(corpus, resultDocs)
+		
+		# Print relevant docs (document identifier, title, and at the end the number of relevant docs obtained)
+		for identifier in resultDocs:
+			print(identifier, " - ", docsWithNames[identifier])
 
-	print("\n", totalResults, " results")
+		print("\n", totalResults, " results")
 
 
 
