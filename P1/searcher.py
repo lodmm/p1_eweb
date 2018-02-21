@@ -11,9 +11,9 @@ import json
 import math
 import os.path
 import pickle
+from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from nltk.tokenize import RegexpTokenizer
-from nltk.corpus import stopwords
 
 
 
@@ -95,6 +95,9 @@ def singleQuery(query, corpus):
 					scoredDocuments[documentID] = score
 
 		# Obtaining documents over a threshold (arithmetic average)
+		# Should be optimized over a metric
+		# Threshold (percentage)
+		# Threshold (fixed value, e.g. maximizing f1)
 		total = 0
 		for d,s in scoredDocuments.items():
 			total = total + s
@@ -114,12 +117,12 @@ def singleQuery(query, corpus):
 
 def getDocumentsName(corpus, documents):
 	if corpus == "cf":
-		cf74 = json.load(open("corpora/cf/json/cf74.json")) # 1 <= recordNum <= 167 (74001 - 74168)
-		cf75 = json.load(open("corpora/cf/json/cf75.json")) # 168 <= recordNum <= 355 (75001 - 75189)
-		cf76 = json.load(open("corpora/cf/json/cf76.json")) # 356 <= recordNum <= 582 (76001 - 76229)
-		cf77 = json.load(open("corpora/cf/json/cf77.json")) # 583 <= recordNum <= 781 (77001 - 77200)
-		cf78 = json.load(open("corpora/cf/json/cf78.json")) # 782 <= recordNum <= 980 (78001 - 78200)
-		cf79 = json.load(open("corpora/cf/json/cf79.json")) # 981 <= recordNum <= 1239 (79001 - 79259)
+		cf74 = json.load(open("corpora/cf/json/cf74.json")) # 1 <= recordNum <= 167 (74001 - 74168 paperNum)
+		cf75 = json.load(open("corpora/cf/json/cf75.json")) # 168 <= recordNum <= 355 (75001 - 75189 paperNum)
+		cf76 = json.load(open("corpora/cf/json/cf76.json")) # 356 <= recordNum <= 582 (76001 - 76229 paperNum)
+		cf77 = json.load(open("corpora/cf/json/cf77.json")) # 583 <= recordNum <= 781 (77001 - 77200 paperNum)
+		cf78 = json.load(open("corpora/cf/json/cf78.json")) # 782 <= recordNum <= 980 (78001 - 78200 paperNum)
+		cf79 = json.load(open("corpora/cf/json/cf79.json")) # 981 <= recordNum <= 1239 (79001 - 79259 paperNum)
 
 		docsWithNames = {}
 		for doc in documents:
