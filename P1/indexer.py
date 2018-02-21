@@ -7,11 +7,12 @@ import argparse
 
 from collections import Counter
 from nltk.tokenize import RegexpTokenizer
+from nltk.stem import PorterStemmer
 from nltk import word_tokenize
 from nltk.corpus import stopwords
 import string
 # nltk.download('stopwords')
-stop = stopwords.words('english') + list(string.punctuation)
+stop = stopwords.words('english') + list(string.punctuation) 
 tknzr = RegexpTokenizer(r'\w+')
 
 moocs='.\corpora\moocs\json\moocs.json'
@@ -39,7 +40,7 @@ def get_indexer(x, c_id, t, block):
 	for y in block:
 		if y not in indexer:
 			types[t] = 1
-			ind[x[c_id]] = types.copy()
+			ind[x[c_id]] = types.copy()				
 			indexer[y] = ind.copy()	
 		else:
 			data = indexer.get(y)
@@ -67,13 +68,23 @@ if corpus == "moocs" :
 	for x in jmoocs:
 		#Description
 		dt = tknzr.tokenize(x["description"])
-		dt = [i for i in dt if i not in stop]
+		dt = [i for i in dt if (i not in stop) and (not i.startswith("\\"))]
+		wordStemmer = []
+		ps = PorterStemmer()
+		for w in dt:
+			wordStemmer.append(ps.stem(w))
+		dt = wordStemmer
 		t_title += len(dt)
 		tam_c['description'] = len(dt)
 		get_indexer(x, 'courseID', 'description', dt )
 		#Title
 		dt = tknzr.tokenize(x["title"])
 		dt = [i for i in dt if i not in stop]
+		wordStemmer = []
+		ps = PorterStemmer()
+		for w in dt:
+			wordStemmer.append(ps.stem(w))
+		dt = wordStemmer
 		t_desc += len(dt)
 		tam_c['title'] = len(dt)
 		get_indexer(x, 'courseID', 'title', dt )
@@ -109,6 +120,11 @@ elif corpus == "cf" :
 			#Title
 			dt = tknzr.tokenize(x["title"])
 			dt = [i for i in dt if i not in stop]
+			wordStemmer = []
+			ps = PorterStemmer()
+			for w in dt:
+				wordStemmer.append(ps.stem(w))
+			dt = wordStemmer	
 			t_title += len(dt)
 			tam_c['title'] = len(dt)
 			get_indexer(x,'recordNum','title',dt)
@@ -116,6 +132,11 @@ elif corpus == "cf" :
 			str1 = ' '.join(authors)
 			dt = tknzr.tokenize(str1)
 			dt = [i for i in dt if i not in stop]
+			wordStemmer = []
+			ps = PorterStemmer()
+			for w in dt:
+				wordStemmer.append(ps.stem(w))
+			dt = wordStemmer
 			t_auth += len(dt)
 			tam_c['authors'] = len(dt)
 			get_indexer(x,'recordNum','authors',dt)
@@ -123,6 +144,11 @@ elif corpus == "cf" :
 			str1 = ' '.join(mS)
 			dt = tknzr.tokenize(str1)
 			dt = [i for i in dt if i not in stop]
+			wordStemmer = []
+			ps = PorterStemmer()
+			for w in dt:
+				wordStemmer.append(ps.stem(w))
+			dt = wordStemmer
 			t_mS += len(dt)
 			tam_c['majorSubjects'] = len(dt)
 			get_indexer(x,'recordNum','majorSubjects',dt)
@@ -130,12 +156,22 @@ elif corpus == "cf" :
 			str1 = ' '.join(miS)
 			dt = tknzr.tokenize(str1)
 			dt = [i for i in dt if i not in stop]
+			wordStemmer = []
+			ps = PorterStemmer()
+			for w in dt:
+				wordStemmer.append(ps.stem(w))
+			dt = wordStemmer
 			t_miS += len(dt)
 			tam_c['minorSubjects'] = len(dt)
 			get_indexer(x,'recordNum','minorSubjects',dt)
 			#Desciption
 			dt = tknzr.tokenize(x['abstract/extract'])
 			dt = [i for i in dt if i not in stop]
+			wordStemmer = []
+			ps = PorterStemmer()
+			for w in dt:
+				wordStemmer.append(ps.stem(w))
+			dt = wordStemmer
 			t_desc += len(dt)
 			tam_c['abstract/extract'] = len(dt)
 			get_indexer(x,'recordNum','abstract/extract',dt)
