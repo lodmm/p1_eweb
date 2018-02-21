@@ -26,7 +26,6 @@ t_desc = 0
 t_mS = 0
 t_miS = 0
 t_auth = 0
-
 parser = argparse.ArgumentParser(description="indexer")
 parser.add_argument("-c", choices=["moocs", "cf"], help="select corpus", required=True)
 args = parser.parse_args()
@@ -70,13 +69,13 @@ if corpus == "moocs" :
 		dt = tknzr.tokenize(x["description"])
 		dt = [i for i in dt if i not in stop]
 		t_title += len(dt)
-		tam_c['title'] = len(dt)
+		tam_c['description'] = len(dt)
 		get_indexer(x, 'courseID', 'description', dt )
 		#Title
 		dt = tknzr.tokenize(x["title"])
 		dt = [i for i in dt if i not in stop]
 		t_desc += len(dt)
-		tam_c['description'] = len(dt)
+		tam_c['title'] = len(dt)
 		get_indexer(x, 'courseID', 'title', dt )
 		id[x['courseID']] = tam_c.copy()
 		tam_c.clear()
