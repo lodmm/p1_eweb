@@ -69,12 +69,25 @@ if corpus == "moocs" :
 		#Description
 		dt = tknzr.tokenize(x["description"])
 		dt = [i for i in dt if i not in stop]
+		t_title += len(dt)
+		tam_c['title'] = len(dt)
 		get_indexer(x, 'courseID', 'description', dt )
 		#Title
 		dt = tknzr.tokenize(x["title"])
 		dt = [i for i in dt if i not in stop]
+		t_desc += len(dt)
+		tam_c['description'] = len(dt)
 		get_indexer(x, 'courseID', 'title', dt )
-	indexer['M'] = n	
+		id[x['courseID']] = tam_c.copy()
+		tam_c.clear()
+	indexer['M'] = n
+	avg['title'] = t_title/n	
+	avg['authors'] = t_auth/n
+	avg['majorSubjects'] = t_mS/n
+	avg['minorSubjects'] = t_miS/n
+	avg['abstract/extract'] = t_desc/n	
+	indexer['tam_c'] = id.copy()	
+	indexer['avg']	= avg.copy()	
 	with open('indices/moocs_indexer.dat', 'wb') as f:
 		pickle.dump(indexer, f, pickle.HIGHEST_PROTOCOL)
 		
