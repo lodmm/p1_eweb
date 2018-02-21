@@ -44,7 +44,7 @@ def getStandard11Point(precisionAndRecall):
 def getF1(precision, recall):
 	f1 = 0
 	try:
-		f1 = 2*(precision*recall)/(precision+recall) 
+		f1 = 2*(precision*recall)/(precision+recall)
 	except ZeroDivisionError as e:
 		return 0
 	return f1

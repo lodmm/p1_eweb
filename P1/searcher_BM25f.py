@@ -11,6 +11,7 @@ import json
 import math
 import os.path
 import pickle
+import string
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 from nltk.tokenize import RegexpTokenizer
@@ -32,7 +33,7 @@ def processingQuery(query): # AQUÍ NO HAY QUE MODIFICAR NADA (EXCEPTO CUANDO A�
 		wordsStemmed.append(ps.stem(w))
 
 	# Removing stopwords
-	stopWords = set(stopwords.words("english"))
+	stopWords = set(stopwords.words("english") + list(string.punctuation) + ["cystic","fibrosis","cf"])
 	wordsFiltered = []
  	
 	for w in wordsStemmed:
@@ -53,7 +54,7 @@ def getRelevantDocs(queryTokens, corpus): # AQUÍ NO HAY QUE MODIFICAR NADA
 	elif corpus == "cf":
 		path = "indices/cf_indexer.dat"
 	with open(path, 'rb') as f:
-         index = pickle.load(f)
+		index = pickle.load(f)
 
 	# Obtaining relevant documents from index file (here we have a dictionary)
 	relevantDocs = {}
@@ -106,9 +107,9 @@ def singleQuery(query, corpus):
 				else:
 					# Moocs corpus
 					if "title" in documentData:
-						tff += (weightsCf["title"]*documentData["title"]/((1-b)+b*absc["title"]/avgCorpusSize["title"]))
+						tff += (weightsMoocs["title"]*documentData["title"]/((1-b)+b*absc["title"]/avgCorpusSize["title"]))
 					if "description" in documentData:
-						tff += (weightsCf["description"]*documentData["description"]/((1-b)+b*absc["description"]/avgCorpusSize["description"]))
+						tff += (weightsMoocs["description"]*documentData["description"]/((1-b)+b*absc["description"]/avgCorpusSize["description"]))
 				# Calculating score
 				score = processedQuery.count(key)*(k+1)*tff*idf/(k+tff)
 				# Updating score of document
@@ -127,6 +128,10 @@ def singleQuery(query, corpus):
 			if s > maximum:
 				maximum = s
 		threshold = maximum*0.4
+		# total = 0
+		# for d,s in scoredDocuments.items():
+		# 	total += s
+		# threshold = total/len(scoredDocuments)
 
 		selectedDocuments = {}
 		for d,s in scoredDocuments.items():
@@ -223,11 +228,11 @@ weightsMoocs = {
 }
 
 weightsCf = {
-	"title" : 0.2,
-	"authors" : 0.2,
-	"minorSubjects" : 0.2,
-	"majorSubjects" : 0.2,
-	"abstract/extract" : 0.2
+	"title" : 2.5,
+	"authors" : 5,
+	"minorSubjects" : 3.5,
+	"majorSubjects" : 4,
+	"abstract/extract" : 1
 }
 
 k = 2 # Valores típicos: 2 o 1.2
