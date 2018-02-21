@@ -18,7 +18,7 @@ from nltk.tokenize import RegexpTokenizer
 
 
 
-def processingQuery(query):
+def processingQuery(query): # AQUÍ NO HAY QUE MODIFICAR NADA (EXCEPTO CUANDO AÑADAMOS EL DICCIONARIO DE SIGLAS Y ACRÓNIMOS)
 
 	# Obtaining tokens from query
 	tokenizer = RegexpTokenizer(r'\w+')
@@ -44,7 +44,7 @@ def processingQuery(query):
 
 
 
-def getRelevantDocs(queryTokens, corpus):
+def getRelevantDocs(queryTokens, corpus): # AQUÍ NO HAY QUE MODIFICAR NADA
 
 	# Reading index json file with pickle library
 	path = ""
@@ -62,7 +62,7 @@ def getRelevantDocs(queryTokens, corpus):
 		if token in index:
 			relevantDocs[token] = index[token]
 
-	return relevantDocs, index["M"]
+	return relevantDocs, index["M"], index["tam_c"], index["avg"]
 
 
 
@@ -72,7 +72,7 @@ def singleQuery(query, corpus):
 	processedQuery = processingQuery(query)
 
 	# Obtaining relevant documents from each token (dictionary)
-	relevantDocuments, M = getRelevantDocs(set(processedQuery), corpus)
+	relevantDocuments, M, corpusSize, avgCorpusSize = getRelevantDocs(set(processedQuery), corpus)
 
 	if not relevantDocuments:
 		# There isn't any relevant document for the query
@@ -85,8 +85,32 @@ def singleQuery(query, corpus):
 			# Calculating documentary frequency for that word in corpus
 			df = len(value)
 
-			for documentID,numOfWords in value.items():
-				score = numOfWords*processedQuery.count(key)*math.log10((M + 1)/df)
+			for documentID,documentData in value.items():
+				absc = corpusSize[documentID]
+				# Calculating idf
+				idf = math.log10((M + 1)/df)
+				# Calculating tff
+				tff = 0
+				if corpus == "cf":
+					# Cf corpus
+					if "title" in documentData:
+						tff += (weightsCf["title"]*documentData["title"]/((1-b)+b*absc["title"]/avgCorpusSize["title"]))
+					if "authors" in documentData:
+						tff += (weightsCf["authors"]*documentData["authors"]/((1-b)+b*absc["authors"]/avgCorpusSize["authors"]))
+					if "minorSubjects" in documentData:
+						tff += (weightsCf["minorSubjects"]*documentData["minorSubjects"]/((1-b)+b*absc["minorSubjects"]/avgCorpusSize["minorSubjects"]))
+					if "majorSubjects" in documentData:
+						tff += (weightsCf["majorSubjects"]*documentData["majorSubjects"]/((1-b)+b*absc["majorSubjects"]/avgCorpusSize["majorSubjects"]))
+					if "abstract/extract" in documentData:
+						tff += (weightsCf["abstract/extract"]*documentData["abstract/extract"]/((1-b)+b*absc["abstract/extract"]/avgCorpusSize["abstract/extract"]))
+				else:
+					# Moocs corpus
+					if "title" in documentData:
+						tff += (weightsCf["title"]*documentData["title"]/((1-b)+b*absc["title"]/avgCorpusSize["title"]))
+					if "description" in documentData:
+						tff += (weightsCf["description"]*documentData["description"]/((1-b)+b*absc["description"]/avgCorpusSize["description"]))
+				# Calculating score
+				score = processedQuery.count(key)*(k+1)*tff*idf/(k+tff)
 				# Updating score of document
 				if documentID in scoredDocuments:
 					lastScore = scoredDocuments[documentID]
@@ -94,14 +118,15 @@ def singleQuery(query, corpus):
 				else:
 					scoredDocuments[documentID] = score
 
-		# Obtaining documents over a threshold (arithmetic average)
+		# Obtaining documents over a threshold (percentage)
 		# Should be optimized over a metric
 		# Threshold (percentage)
 		# Threshold (fixed value, e.g. maximizing f1)
-		total = 0
+		maximum = 0
 		for d,s in scoredDocuments.items():
-			total = total + s
-		threshold = total/len(scoredDocuments)
+			if s > maximum:
+				maximum = s
+		threshold = maximum*0.4
 
 		selectedDocuments = {}
 		for d,s in scoredDocuments.items():
@@ -115,7 +140,7 @@ def singleQuery(query, corpus):
 
 
 
-def getDocumentsName(corpus, documents):
+def getDocumentsName(corpus, documents): # AQUÍ NO HAY QUE MODIFICAR NADA
 	if corpus == "cf":
 		cf74 = json.load(open("corpora/cf/json/cf74.json")) # 1 <= recordNum <= 167 (74001 - 74168 paperNum)
 		cf75 = json.load(open("corpora/cf/json/cf75.json")) # 168 <= recordNum <= 355 (75001 - 75189 paperNum)
@@ -159,7 +184,7 @@ def getDocumentsName(corpus, documents):
 
 
 
-
+# A PARTIR DE AQUÍ NO HAY QUE MODIFICAR NADA
 # Processing arguments
 parser = argparse.ArgumentParser(description="search engine")
 parser.add_argument("-c", choices=["moocs", "cf"], help="select corpus", required=True)
@@ -190,6 +215,23 @@ else:
 		parser.exit(message="\nMoocs index file does not exist. Please execute indexer.py before searcher.py\n")
 
 
+
+
+weightsMoocs = {
+	"title" : 0.5,
+	"description" : 0.5
+}
+
+weightsCf = {
+	"title" : 0.2,
+	"authors" : 0.2,
+	"minorSubjects" : 0.2,
+	"majorSubjects" : 0.2,
+	"abstract/extract" : 0.2
+}
+
+k = 2 # Valores típicos: 2 o 1.2
+b = 0.75
 
 
 # We are in query mode, where user introduced a query by command line

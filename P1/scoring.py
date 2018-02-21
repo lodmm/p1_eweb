@@ -77,11 +77,12 @@ for i in range(len(idealFile)):
 
 avgStandard11Point = np.sum(totalStandard11Point, axis=0)/len(totalStandard11Point)
 
-plt.plot(np.arange(0,101,10), avgStandard11Point, marker="o")
+plt.plot(np.arange(0,1.1,0.1), avgStandard11Point, marker="o")
 plt.xlabel("Recall")
 plt.ylabel("Precision")
 plt.ylim(0.0,1.0)
 plt.grid(True)
+plt.title(args.c)
 filename = ""
 while(True):
 	filename = input("Write a name for the PNG file (without extension) of the Standard 11 Point chart: ")
@@ -100,6 +101,7 @@ plt.axhline(np.mean(f1), color="red", linewidth=1)
 plt.xlabel("Query ID")
 plt.ylabel("F1")
 plt.grid(True)
+plt.title(args.c)
 #plt.show()
 filename = ""
 while(True):
