@@ -33,9 +33,12 @@ def getStandard11Point(precisionAndRecall):
 	precisionAndRecall.sort(key=lambda x:x[1])
 	standard11Point = []
 	for i in range(11):
-		point = next((x for [x,y] in precisionAndRecall if y >= i/10), None)
-		if not point:
-			point = 0
+		recallList = (x for [x,y] in precisionAndRecall if y >= i/10)
+		point = 0
+		try:
+			point = max(recallList)
+		except Exception as e:
+			pass
 		standard11Point.append(point)
 
 	return standard11Point
