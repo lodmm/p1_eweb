@@ -13,7 +13,7 @@ from nltk.corpus import stopwords
 import string
 # nltk.download('stopwords')
 stop = stopwords.words('english') + list(string.punctuation) 
-tknzr = RegexpTokenizer(r'/w+')
+tknzr = RegexpTokenizer(r'\w+')
 
 moocs='./corpora/moocs/json/moocs.json'
 cf=["./corpora/cf/json/cf74.json", "./corpora/cf/json/cf75.json", "./corpora/cf/json/cf76.json", "./corpora/cf/json/cf77.json", "./corpora/cf/json/cf78.json", "./corpora/cf/json/cf79.json"]
@@ -54,7 +54,7 @@ def get_indexer(x, c_id, t, block):
 			else:
 				types[t] = 1
 				data[x[c_id]] = types.copy()
-			indexer[y] = data.copy()	
+			indexer[y] = data.copy()		
 		aux.clear()	
 		types.clear()	
 		ind.clear()
@@ -66,9 +66,9 @@ def get_pln(dt):
 	dt = tknzr.tokenize(dt)
 	ls = WordNetLemmatizer()
 	for w in dt:
-		wordStemmer.append(ls.lemmatize(w))
+		wordStemmer.append(ls.lemmatize(w.lower()))
 	dt = wordStemmer
-	dt = [i for i in dt if (i not in stop) and (not i.startswith("//"))]
+	# dt = [i for i in dt if (i not in stop)]
 	return dt
 	
 if corpus == "moocs" :
