@@ -14,29 +14,37 @@ import pickle
 import string
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
+from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import RegexpTokenizer
 
 
 
 
-def processingQuery(query): # AQUÍ NO HAY QUE MODIFICAR NADA (EXCEPTO CUANDO AÑADAMOS EL DICCIONARIO DE SIGLAS Y ACRÓNIMOS)
+def processingQuery(query):
 
 	# Obtaining tokens from query
 	tokenizer = RegexpTokenizer(r'\w+')
 	tokens = tokenizer.tokenize(query)
 
-	# Stemming words (stripping sufixes)
-	wordsStemmed = []
-	ps = PorterStemmer()
+	# Lemmatizing words (obtaining lemma)
+	wordsLemmed = []
+	wnl = WordNetLemmatizer()
 
 	for w in tokens:
-		wordsStemmed.append(ps.stem(w))
+		wordsLemmed.append(wnl.lemmatize(w))
+
+	# Stemming words (stripping sufixes)
+	# wordsStemmed = []
+	# ps = PorterStemmer()
+
+	# for w in tokens:
+	# 	wordsStemmed.append(ps.stem(w))
 
 	# Removing stopwords
-	stopWords = set(stopwords.words("english") + list(string.punctuation) + ["cystic","fibrosis","cf"])
+	stopWords = set(stopwords.words("english") + list(string.punctuation))
 	wordsFiltered = []
  	
-	for w in wordsStemmed:
+	for w in wordsLemmed:
 	    if w not in stopWords:
 	        wordsFiltered.append(w)
 
@@ -45,7 +53,7 @@ def processingQuery(query): # AQUÍ NO HAY QUE MODIFICAR NADA (EXCEPTO CUANDO A�
 
 
 
-def getRelevantDocs(queryTokens, corpus): # AQUÍ NO HAY QUE MODIFICAR NADA
+def getRelevantDocs(queryTokens, corpus):
 
 	# Reading index json file with pickle library
 	path = ""
@@ -145,7 +153,7 @@ def singleQuery(query, corpus):
 
 
 
-def getDocumentsName(corpus, documents): # AQUÍ NO HAY QUE MODIFICAR NADA
+def getDocumentsName(corpus, documents):
 	if corpus == "cf":
 		cf74 = json.load(open("corpora/cf/json/cf74.json")) # 1 <= recordNum <= 167 (74001 - 74168 paperNum)
 		cf75 = json.load(open("corpora/cf/json/cf75.json")) # 168 <= recordNum <= 355 (75001 - 75189 paperNum)
@@ -157,22 +165,16 @@ def getDocumentsName(corpus, documents): # AQUÍ NO HAY QUE MODIFICAR NADA
 		docsWithNames = {}
 		for doc in documents:
 			if 1 <= doc <= 167:
-			#if 74001 <= doc <= 74168:
 				docsWithNames[doc] = cf74[doc-1]["title"]
 			elif 168 <= doc <= 355:
-			#elif 75001 <= doc <= 75189:
 				docsWithNames[doc] = cf75[doc-168]["title"]
 			elif 356 <= doc <= 582:
-			#elif 76001 <= doc <= 76229:
 				docsWithNames[doc] = cf76[doc-356]["title"]
 			elif 583 <= doc <= 781:
-			#elif 77001 <= doc <= 77200:
 				docsWithNames[doc] = cf77[doc-583]["title"]
 			elif 782 <= doc <= 980:
-			#elif 78001 <= doc <= 78200:
 				docsWithNames[doc] = cf78[doc-782]["title"]
 			elif 981 <= doc <= 1239:
-			#elif 79001 <= doc <= 79259:
 				docsWithNames[doc] = cf79[doc-981]["title"]
 
 		return docsWithNames
@@ -189,7 +191,7 @@ def getDocumentsName(corpus, documents): # AQUÍ NO HAY QUE MODIFICAR NADA
 
 
 
-# A PARTIR DE AQUÍ NO HAY QUE MODIFICAR NADA
+
 # Processing arguments
 parser = argparse.ArgumentParser(description="search engine")
 parser.add_argument("-c", choices=["moocs", "cf"], help="select corpus", required=True)
@@ -223,16 +225,16 @@ else:
 
 
 weightsMoocs = {
-	"title" : 0.5,
-	"description" : 0.5
+	"title" : 4,
+	"description" : 1.5
 }
 
 weightsCf = {
-	"title" : 2.5,
+	"title" : 3,
 	"authors" : 5,
-	"minorSubjects" : 3.5,
-	"majorSubjects" : 4,
-	"abstract/extract" : 1
+	"minorSubjects" : 0.5,
+	"majorSubjects" : 0.5,
+	"abstract/extract" : 2
 }
 
 k = 2 # Valores típicos: 2 o 1.2
