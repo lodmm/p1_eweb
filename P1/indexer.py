@@ -79,13 +79,13 @@ if corpus == "moocs" :
 		#Description
 		dt = x['description']
 		dt = get_pln(dt)
-		t_title += len(dt)
+		t_desc += len(dt)
 		tam_c['description'] = len(dt)
 		get_indexer(x, 'courseID', 'description', dt )
 		#Title
 		dt = x['title']
 		dt = get_pln(dt)
-		t_desc += len(dt)
+		t_title += len(dt)
 		tam_c['title'] = len(dt)
 		get_indexer(x, 'courseID', 'title', dt )
 		id[x['courseID']] = tam_c.copy()
