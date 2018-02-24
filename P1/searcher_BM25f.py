@@ -13,10 +13,8 @@ import os.path
 import pickle
 import string
 from nltk.corpus import stopwords
-from nltk.stem import PorterStemmer
 from nltk.stem import WordNetLemmatizer
 from nltk.tokenize import RegexpTokenizer
-
 
 
 
@@ -31,14 +29,7 @@ def processingQuery(query):
 	wnl = WordNetLemmatizer()
 
 	for w in tokens:
-		wordsLemmed.append(wnl.lemmatize(w))
-
-	# Stemming words (stripping sufixes)
-	# wordsStemmed = []
-	# ps = PorterStemmer()
-
-	# for w in tokens:
-	# 	wordsStemmed.append(ps.stem(w))
+		wordsLemmed.append(wnl.lemmatize(w.lower()))
 
 	# Removing stopwords
 	stopWords = set(stopwords.words("english") + list(string.punctuation))
@@ -53,16 +44,7 @@ def processingQuery(query):
 
 
 
-def getRelevantDocs(queryTokens, corpus):
-
-	# Reading index json file with pickle library
-	path = ""
-	if corpus == "moocs":
-		path = "indices/moocs_indexer.dat"
-	elif corpus == "cf":
-		path = "indices/cf_indexer.dat"
-	with open(path, 'rb') as f:
-		index = pickle.load(f)
+def getRelevantDocs(queryTokens, corpus, index):
 
 	# Obtaining relevant documents from index file (here we have a dictionary)
 	relevantDocs = {}
@@ -75,13 +57,13 @@ def getRelevantDocs(queryTokens, corpus):
 
 
 
-def singleQuery(query, corpus):
+def singleQuery(query, corpus, index):
 
 	# Obtaining relevant words (tokens) from query
 	processedQuery = processingQuery(query)
 
 	# Obtaining relevant documents from each token (dictionary)
-	relevantDocuments, M, corpusSize, avgCorpusSize = getRelevantDocs(set(processedQuery), corpus)
+	relevantDocuments, M, corpusSize, avgCorpusSize = getRelevantDocs(set(processedQuery), corpus, index)
 
 	if not relevantDocuments:
 		# There isn't any relevant document for the query
@@ -100,24 +82,30 @@ def singleQuery(query, corpus):
 				idf = math.log10((M + 1)/df)
 				# Calculating tff
 				tff = 0
+				k = 0
+				percentage = 0
 				if corpus == "cf":
+					k = kCf
+					percentage = 0.4
 					# Cf corpus
 					if "title" in documentData:
-						tff += (weightsCf["title"]*documentData["title"]/((1-b)+b*absc["title"]/avgCorpusSize["title"]))
+						tff += (weightsCf["title"]*documentData["title"]/((1 - bCf["title"])+bCf["title"]*absc["title"]/avgCorpusSize["title"]))
 					if "authors" in documentData:
-						tff += (weightsCf["authors"]*documentData["authors"]/((1-b)+b*absc["authors"]/avgCorpusSize["authors"]))
+						tff += (weightsCf["authors"]*documentData["authors"]/((1-bCf["authors"])+bCf["authors"]*absc["authors"]/avgCorpusSize["authors"]))
 					if "minorSubjects" in documentData:
-						tff += (weightsCf["minorSubjects"]*documentData["minorSubjects"]/((1-b)+b*absc["minorSubjects"]/avgCorpusSize["minorSubjects"]))
+						tff += (weightsCf["minorSubjects"]*documentData["minorSubjects"]/((1-bCf["minorSubjects"])+bCf["minorSubjects"]*absc["minorSubjects"]/avgCorpusSize["minorSubjects"]))
 					if "majorSubjects" in documentData:
-						tff += (weightsCf["majorSubjects"]*documentData["majorSubjects"]/((1-b)+b*absc["majorSubjects"]/avgCorpusSize["majorSubjects"]))
+						tff += (weightsCf["majorSubjects"]*documentData["majorSubjects"]/((1-bCf["majorSubjects"])+bCf["majorSubjects"]*absc["majorSubjects"]/avgCorpusSize["majorSubjects"]))
 					if "abstract/extract" in documentData:
-						tff += (weightsCf["abstract/extract"]*documentData["abstract/extract"]/((1-b)+b*absc["abstract/extract"]/avgCorpusSize["abstract/extract"]))
+						tff += (weightsCf["abstract/extract"]*documentData["abstract/extract"]/((1-bCf["abstract/extract"])+bCf["abstract/extract"]*absc["abstract/extract"]/avgCorpusSize["abstract/extract"]))
 				else:
+					k = kMoocs
+					percentage = 0.8
 					# Moocs corpus
 					if "title" in documentData:
-						tff += (weightsMoocs["title"]*documentData["title"]/((1-b)+b*absc["title"]/avgCorpusSize["title"]))
+						tff += (weightsMoocs["title"]*documentData["title"]/((1-bMoocs["title"])+bMoocs["title"]*absc["title"]/avgCorpusSize["title"]))
 					if "description" in documentData:
-						tff += (weightsMoocs["description"]*documentData["description"]/((1-b)+b*absc["description"]/avgCorpusSize["description"]))
+						tff += (weightsMoocs["description"]*documentData["description"]/((1-bMoocs["description"])+bMoocs["description"]*absc["description"]/avgCorpusSize["description"]))
 				# Calculating score
 				score = processedQuery.count(key)*(k+1)*tff*idf/(k+tff)
 				# Updating score of document
@@ -135,11 +123,7 @@ def singleQuery(query, corpus):
 		for d,s in scoredDocuments.items():
 			if s > maximum:
 				maximum = s
-		threshold = maximum*0.4
-		# total = 0
-		# for d,s in scoredDocuments.items():
-		# 	total += s
-		# threshold = total/len(scoredDocuments)
+		threshold = maximum*percentage
 
 		selectedDocuments = {}
 		for d,s in scoredDocuments.items():
@@ -155,12 +139,12 @@ def singleQuery(query, corpus):
 
 def getDocumentsName(corpus, documents):
 	if corpus == "cf":
-		cf74 = json.load(open("corpora/cf/json/cf74.json")) # 1 <= recordNum <= 167 (74001 - 74168 paperNum)
-		cf75 = json.load(open("corpora/cf/json/cf75.json")) # 168 <= recordNum <= 355 (75001 - 75189 paperNum)
-		cf76 = json.load(open("corpora/cf/json/cf76.json")) # 356 <= recordNum <= 582 (76001 - 76229 paperNum)
-		cf77 = json.load(open("corpora/cf/json/cf77.json")) # 583 <= recordNum <= 781 (77001 - 77200 paperNum)
-		cf78 = json.load(open("corpora/cf/json/cf78.json")) # 782 <= recordNum <= 980 (78001 - 78200 paperNum)
-		cf79 = json.load(open("corpora/cf/json/cf79.json")) # 981 <= recordNum <= 1239 (79001 - 79259 paperNum)
+		cf74 = json.load(open("corpora/cf/json/cf74.json")) # 1 <= recordNum <= 167
+		cf75 = json.load(open("corpora/cf/json/cf75.json")) # 168 <= recordNum <= 355
+		cf76 = json.load(open("corpora/cf/json/cf76.json")) # 356 <= recordNum <= 582
+		cf77 = json.load(open("corpora/cf/json/cf77.json")) # 583 <= recordNum <= 781
+		cf78 = json.load(open("corpora/cf/json/cf78.json")) # 782 <= recordNum <= 980
+		cf79 = json.load(open("corpora/cf/json/cf79.json")) # 981 <= recordNum <= 1239
 
 		docsWithNames = {}
 		for doc in documents:
@@ -225,26 +209,50 @@ else:
 
 
 weightsMoocs = {
-	"title" : 4,
+	"title" : 3,
 	"description" : 1.5
 }
 
 weightsCf = {
-	"title" : 3,
-	"authors" : 5,
-	"minorSubjects" : 0.5,
-	"majorSubjects" : 0.5,
-	"abstract/extract" : 2
+	"title" : 1.5,
+	"authors" : 1,
+	"minorSubjects" : 2,
+	"majorSubjects" : 3,
+	"abstract/extract" : 1
 }
 
-k = 2 # Valores típicos: 2 o 1.2
-b = 0.75
+kCf = 3.37 # Valores típicos: 2 o 1.2
+
+kMoocs = 3.2
+
+bCf = {
+	"title" : 0.75,
+	"authors" : 0.75,
+	"minorSubjects" : 0.75,
+	"majorSubjects" : 0.75,
+	"abstract/extract" : 0.75
+}
+
+bMoocs = {
+	"title" : 0.75,
+	"description" : 0.75
+}
+
+
+# Reading index json file with pickle library
+path = ""
+if corpus == "moocs":
+	path = "indices/moocs_indexer.dat"
+elif corpus == "cf":
+	path = "indices/cf_indexer.dat"
+with open(path, 'rb') as f:
+	index = pickle.load(f)
 
 
 # We are in query mode, where user introduced a query by command line
 if query != "f":
-	
-	resultDocs = singleQuery(query, corpus)
+
+	resultDocs = singleQuery(query, corpus, index)
 	if not resultDocs:
 		print("There isn't any relevant document for this query.")
 	else:
@@ -280,7 +288,7 @@ elif queryFile != "f":
 	# For each query in file, we get the relevant document ids
 	queriesResult = []
 	for query in queries:
-		resultDocs = singleQuery(query["queryText"], corpus)
+		resultDocs = singleQuery(query["queryText"], corpus, index)
 		queriesResult.append({"queryID":query["queryID"],"relevantDocs":resultDocs})
 
 	# Writing json to results file
