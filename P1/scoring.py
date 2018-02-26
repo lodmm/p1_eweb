@@ -510,7 +510,7 @@ while(True):
 
 plt.savefig(filename, bbox_inches="tight")
 plt.clf()
-
+print(mr_l)
 plt.bar(range(len(obtainedFile)), mr_l)
 plt.axhline(np.mean(mr_l), color="red", linewidth=1)
 plt.xlabel("Query ID")
