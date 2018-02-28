@@ -4,6 +4,7 @@ import nltk
 import collections
 import pickle
 import argparse
+import pprint
 
 from collections import Counter
 from nltk.tokenize import RegexpTokenizer
@@ -156,8 +157,11 @@ elif corpus == "cf" :
 	avg['abstract/extract'] = t_desc/n	
 	indexer['tam_c'] = id.copy()	
 	indexer['avg']	= avg.copy()
-	indexer['M'] = n	
+	indexer['M'] = n
+	for i in indexer:
+		print(i)
+		print(indexer[i])
 	with open('indices/cf_indexer.dat', 'wb') as f:
-		pickle.dump(indexer, f, pickle.HIGHEST_PROTOCOL)	
+		json.dump(indexer, f, pickle.HIGHEST_PROTOCOL)	
 
 		

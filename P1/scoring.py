@@ -6,6 +6,18 @@ import os.path
 import math
 import operator
 
+def get_g(m):
+	media = 1
+	num = 0
+	s=0
+	for i in m:
+		if i!= 0:
+			if num != 0:
+				media *= i
+				s+=1
+		num+=1			
+	media = media **(1/s)
+	return media
 
 def getPrecisionAndRecallCurve(idealDocuments, obtainedDocuments):
 	precision = []
@@ -29,6 +41,7 @@ def getPrecisionAndRecallCurve(idealDocuments, obtainedDocuments):
 	except ZeroDivisionError as e:
 		pass
 	return avgPrecision, avgRecall, getStandard11Point(precisionAndRecall)
+	
 def gain_10(g,m):
 	result = []
 	if len(g) >=m:
@@ -43,7 +56,6 @@ def gain_10(g,m):
 	return result
 
 def getStandard11Point(precisionAndRecall):
-
 	precisionAndRecall.sort(key=lambda x:x[1])
 	standard11Point = []
 	for i in range(11):
@@ -65,27 +77,17 @@ def getF1(precision, recall):
 		return 0
 	return f1
 
-def get_map(idealResults,obtainedResults):
+def get_map(prec,s11point):
 	prec = 0
 	num = 0
 	hits = 0
 	ap = 0
-	for i in idealResults:
-		num += 1
-		if i in obtainedResults:
-			hits += 1
-			try:
-				prec = hits/num
-			except ZeroDivisionError as e:
-				prec = 0	
-		else:
-			prec = 0	
-		ap += prec
-	try:
-		media = ap/len(idealResults)
-	except ZeroDivisionError as e:
-		pass
-
+	num = 0
+	for i in s11point:
+		if num != 0:
+			ap += i
+		num+=1	
+	media = ap/10		
 	return media
 	 
 def get_pan(idealResults,obtainedResults,precision):
@@ -210,18 +212,23 @@ def get_pan(idealResults,obtainedResults,precision):
 	
 def get_rprecision(idealResults,obtainedResults,refFiles):
 	hits = 0
-	if	len(obtainedResults) >= 10:
-		obtR = obtainedResults[:10]
+	if	len(obtainedResults) >= 20:
+		obtR = obtainedResults[:20]
 		for i in obtR:
 			if i in idealResults:
 				hits +=1
 		try:
-			rpa = hits/10
+			rpa = hits/20
 				
 		except ZeroDivisionError as e:
 			rpa = 0	
 					
 	else:
+		while len(obtainedResults)<20:
+			if  len(obtainedResults) != 0:
+				obtainedResults.append(obtainedResults[len(obtainedResults)-1])
+			else:
+				obtainedResults.append(0)
 		for i in obtainedResults:
 			if i in idealResults:
 				hits +=1
@@ -231,18 +238,23 @@ def get_rprecision(idealResults,obtainedResults,refFiles):
 		except ZeroDivisionError as e:
 			rpa = 0	
 	hits= 0	
-	if	len(refFiles) >= 10:
-		obtR = refFiles[:10]
+	if	len(refFiles) >= 20:
+		obtR = refFiles[:20]
 		for i in obtR:
 			if i in idealResults:
 				hits +=1
 		try:
-			rpb = hits/10
+			rpb = hits/20
 					
 		except ZeroDivisionError as e:
 			rpb = 0	
 					
 	else:
+		while len(refFiles)<20:
+			if len(refFiles) != 0:
+				refFiles.append(refFiles[len(refFiles)-1])
+			else:
+				refFiles.append(0)
 		for i in refFiles:
 			if i in idealResults:
 				hits +=1
@@ -257,7 +269,7 @@ def get_rprecision(idealResults,obtainedResults,refFiles):
 def get_mrr(idealResults,obtainedResults):
 	hits = 0
 	num = 0
-	shold = 20
+	shold = 100
 	r = 0
 	for i in obtainedResults:
 		num += 1
@@ -273,7 +285,7 @@ def get_mrr(idealResults,obtainedResults):
 
 	return r
 	
-def get_multilevel(idealResults,obtainedResults,id,max):
+def get_multilevel(idealResults,obtainedResults,id,maxi):
 	gain_c = []
 	gain_dc = []
 	pos = 0
@@ -302,8 +314,6 @@ def get_multilevel(idealResults,obtainedResults,id,max):
 				gain_vr[i] = 1
 			num+=1	
 	for i in obtainedResults:
-		if len(obtainedResults)>max:
-			max = len(obtainedResults)
 		if i in idealResults:
 			if pos != 0:
 				gain_c.append(gain_c[pos-1]+gain_vr[i])
@@ -319,7 +329,7 @@ def get_multilevel(idealResults,obtainedResults,id,max):
 				gain_c.append(0)
 				gain_dc.append(0)
 		pos+=1					
-	return gain_10(gain_c,max),gain_10(gain_dc,max)
+	return gain_10(gain_c,maxi),gain_10(gain_dc,maxi)
 def get_multilevel_ideal(idealResults,ObtainedResults,id,maxi):
 	gain_vr = dict()
 	gain_c = []
@@ -375,8 +385,6 @@ if not os.path.isfile(args.o):
 idealFile = json.load(open("corpora/" + args.c + "/json/qrels.json"))
 obtainedFile = json.load(open(args.o))
 pFiles = json.load(open("./" + args.c + "_ref_qresults.json"))
-# if pFiles == obtainedFile:
-	# rFiles = json.load(open("./" + args.c + "_results.json"))
 f1 = []
 rt_l = []
 mr_l = []
@@ -388,7 +396,7 @@ pan15_m = 0
 pan20_m = 0
 pan25_m = 0
 r_m = 0
-max = 0
+maxi_l=0
 maxi = 0
 i_q = []
 i_dq = []
@@ -400,11 +408,11 @@ p_15 = []
 p_20 = []
 p_25 = []
 for i in obtainedFile:
-	if len(i['relevantDocs'])>max:
-		max = len(i['relevantDocs'])
-for i in idealFile:
 	if len(i['relevantDocs'])>maxi:
 		maxi = len(i['relevantDocs'])
+for i in idealFile:
+	if len(i['relevantDocs'])>maxi:
+		maxi_l = len(i['relevantDocs'])
 for i in range(len(idealFile)):
 	idealResults = idealFile[i]["relevantDocs"]
 	obtainedResults = obtainedFile[i]["relevantDocs"]
@@ -412,7 +420,7 @@ for i in range(len(idealFile)):
 	precision, recall, standard11Point = getPrecisionAndRecallCurve(idealResults, obtainedResults)
 	f1.append(getF1(precision, recall))
 	totalStandard11Point.append(standard11Point)
-	ap = get_map(idealResults,obtainedResults)
+	ap = get_map(precision,standard11Point)
 	map_m.append(ap)
 	p = get_pan(idealResults,obtainedResults,precision)
 	pan5_m = p.get('5',0)
@@ -429,10 +437,10 @@ for i in range(len(idealFile)):
 	rt_l.append(r)
 	mr = get_mrr(idealResults,obtainedResults)
 	mr_l.append(mr)
-	gain_c, gain_dc = get_multilevel(idealResults,obtainedResults,obtainedFile[i]['queryID'],max)
+	gain_c, gain_dc = get_multilevel(idealResults,obtainedResults,obtainedFile[i]['queryID'],maxi)
 	c_q.append(gain_c)
 	dc_q.append(gain_dc)
-	gain_i,gain_id= get_multilevel_ideal(idealResults,obtainedResults,idealFile[i]['queryID'],max)
+	gain_i,gain_id= get_multilevel_ideal(idealResults,obtainedResults,idealFile[i]['queryID'],maxi)
 	i_q.append(gain_i)
 	i_dq.append(gain_id)
 	
@@ -493,9 +501,30 @@ while(True):
 
 plt.savefig(filename, bbox_inches="tight")
 plt.clf()
+gmap = get_g(map_m)
+print(gmap)
+plt.bar(range(len(obtainedFile)), map_m)
+plt.axhline(gmap, color="red", linewidth=1)
+plt.xlabel("Query ID")
+plt.ylabel("MAP")
+plt.grid(True)
+plt.title(args.c)
+#plt.show()
+filename = ""
+while(True):
+	filename = input("Write a name for the PNG file (without extension) of the GMAP chart: ")
+	filename = filename + ".png"
+	if os.path.isfile(filename):
+		print("This file already exists")
+	else:
+		break
+
+plt.savefig(filename, bbox_inches="tight")
+plt.clf()
+
 plt.bar(range(len(obtainedFile)), rt_l)
 plt.xlabel("Query ID")
-plt.ylabel("10-Precision")
+plt.ylabel("20-Precision")
 plt.grid(True)
 plt.title(args.c)
 #plt.show()
@@ -510,17 +539,34 @@ while(True):
 
 plt.savefig(filename, bbox_inches="tight")
 plt.clf()
-print(mr_l)
+
 plt.bar(range(len(obtainedFile)), mr_l)
 plt.axhline(np.mean(mr_l), color="red", linewidth=1)
 plt.xlabel("Query ID")
 plt.ylabel("Mean Reciprocal Rank")
 plt.grid(True)
 plt.title(args.c)
-#plt.show()
+# plt.show()
 filename = ""
 while(True):
 	filename = input("Write a name for the PNG file (without extension) of the Multi Reciprocal Rank chart: ")
+	filename = filename + ".png"
+	if os.path.isfile(filename):
+		print("This file already exists")
+	else:
+		break
+plt.savefig(filename, bbox_inches="tight")
+plt.clf()
+
+plt.bar(range(len(obtainedFile)), p_5)
+plt.axhline(np.mean(p_5), color="red", linewidth=1)
+plt.xlabel("Query ID")
+plt.ylabel("P@5%")
+plt.grid(True)
+plt.title(args.c)
+filename = ""
+while(True):
+	filename = input("Write a name for the PNG file (without extension) of the P@5 chart: ")
 	filename = filename + ".png"
 	if os.path.isfile(filename):
 		print("This file already exists")
@@ -530,105 +576,85 @@ while(True):
 plt.savefig(filename, bbox_inches="tight")
 plt.clf()
 
-# plt.bar(range(len(obtainedFile)), p_5)
-# plt.axhline(np.mean(p_5), color="red", linewidth=1)
-# plt.xlabel("Query ID")
-# plt.ylabel("P@5%")
-# plt.grid(True)
-# plt.title(args.c)
-# filename = ""
-# while(True):
-	# filename = input("Write a name for the PNG file (without extension) of the P@5 chart: ")
-	# filename = filename + ".png"
-	# if os.path.isfile(filename):
-		# print("This file already exists")
-	# else:
-		# break
-
-# plt.savefig(filename, bbox_inches="tight")
-# plt.clf()
-
-# plt.bar(range(len(obtainedFile)), p_10)
-# plt.axhline(np.mean(p_10), color="red", linewidth=1)
-# plt.xlabel("Query ID")
-# plt.ylabel("P@10%")
-# plt.grid(True)
-# plt.title(args.c)
-# filename = ""
-# while(True):
-	# filename = input("Write a name for the PNG file (without extension) of the P@10 chart: ")
-	# filename = filename + ".png"
-	# if os.path.isfile(filename):
-		# print("This file already exists")
-	# else:
-		# break
-
-# plt.savefig(filename, bbox_inches="tight")
-# plt.clf()
-# plt.bar(range(len(obtainedFile)), p_15)
-# plt.axhline(np.mean(p_15), color="red", linewidth=1)
-# plt.xlabel("Query ID")
-# plt.ylabel("P@15%")
-# plt.grid(True)
-# plt.title(args.c)
-# filename = ""
-# while(True):
-	# filename = input("Write a name for the PNG file (without extension) of the P@15 chart: ")
-	# filename = filename + ".png"
-	# if os.path.isfile(filename):
-		# print("This file already exists")
-	# else:
-		# break
-
-# plt.savefig(filename, bbox_inches="tight")
-# plt.clf()
-# plt.bar(range(len(obtainedFile)), p_20)
-# plt.axhline(np.mean(p_20), color="red", linewidth=1)
-# plt.xlabel("Query ID")
-# plt.ylabel("P@20%")
-# plt.grid(True)
-# plt.title(args.c)
-# filename = ""
-# while(True):
-	# filename = input("Write a name for the PNG file (without extension) of the P@20 chart: ")
-	# filename = filename + ".png"
-	# if os.path.isfile(filename):
-		# print("This file already exists")
-	# else:
-		# break
-
-# plt.savefig(filename, bbox_inches="tight")
-# plt.clf()
-# plt.bar(range(len(obtainedFile)), p_25)
-# plt.axhline(np.mean(p_25), color="red", linewidth=1)
-# plt.xlabel("Query ID")
-# plt.ylabel("P@25%")
-# plt.grid(True)
-# plt.title(args.c)
-# filename = ""
-# while(True):
-	# filename = input("Write a name for the PNG file (without extension) of the P@25 chart: ")
-	# filename = filename + ".png"
-	# if os.path.isfile(filename):
-		# print("This file already exists")
-	# else:
-		# break
-
-# plt.savefig(filename, bbox_inches="tight")
-# plt.clf()
+plt.bar(range(len(obtainedFile)), p_10)
+plt.axhline(np.mean(p_10), color="red", linewidth=1)
+plt.xlabel("Query ID")
+plt.ylabel("P@10%")
+plt.grid(True)
+plt.title(args.c)
+filename = ""
+while(True):
+	filename = input("Write a name for the PNG file (without extension) of the P@10 chart: ")
+	filename = filename + ".png"
+	if os.path.isfile(filename):
+		print("This file already exists")
+	else:
+		break
 
 plt.savefig(filename, bbox_inches="tight")
 plt.clf()
-plt.bar(range(len(obtainedFile)), p_5, color = 'blue',label='P@5%')
-plt.axhline(np.mean(p_5), color="blue", linewidth=1)
+plt.bar(range(len(obtainedFile)), p_15)
+plt.axhline(np.mean(p_15), color="red", linewidth=1)
+plt.xlabel("Query ID")
+plt.ylabel("P@15%")
+plt.grid(True)
+plt.title(args.c)
+filename = ""
+while(True):
+	filename = input("Write a name for the PNG file (without extension) of the P@15 chart: ")
+	filename = filename + ".png"
+	if os.path.isfile(filename):
+		print("This file already exists")
+	else:
+		break
+
+plt.savefig(filename, bbox_inches="tight")
+plt.clf()
+plt.bar(range(len(obtainedFile)), p_20)
+plt.axhline(np.mean(p_20), color="red", linewidth=1)
+plt.xlabel("Query ID")
+plt.ylabel("P@20%")
+plt.grid(True)
+plt.title(args.c)
+filename = ""
+while(True):
+	filename = input("Write a name for the PNG file (without extension) of the P@20 chart: ")
+	filename = filename + ".png"
+	if os.path.isfile(filename):
+		print("This file already exists")
+	else:
+		break
+
+plt.savefig(filename, bbox_inches="tight")
+plt.clf()
+plt.bar(range(len(obtainedFile)), p_25)
+plt.axhline(np.mean(p_25), color="red", linewidth=1)
+plt.xlabel("Query ID")
+plt.ylabel("P@25%")
+plt.grid(True)
+plt.title(args.c)
+filename = ""
+while(True):
+	filename = input("Write a name for the PNG file (without extension) of the P@25 chart: ")
+	filename = filename + ".png"
+	if os.path.isfile(filename):
+		print("This file already exists")
+	else:
+		break
+
+plt.savefig(filename, bbox_inches="tight")
+plt.clf()
+
+plt.bar(range(len(obtainedFile)), p_5, color = 'yellow',label='P@5%')
+plt.axhline(np.mean(p_5), color="yellow", linewidth=3)
 plt.bar(range(len(obtainedFile)), p_10, color = 'black',label='P@10%')
-plt.axhline(np.mean(p_10), color="black", linewidth=1)
+plt.axhline(np.mean(p_10), color="black", linewidth=3)
 plt.bar(range(len(obtainedFile)), p_15, color = 'green',label='P@15%')
-plt.axhline(np.mean(p_15), color="green", linewidth=1)
+plt.axhline(np.mean(p_15), color="green", linewidth=3)
 plt.bar(range(len(obtainedFile)), p_20, color = 'pink',label='P@20%')
-plt.axhline(np.mean(p_20), color="pink", linewidth=1)
-plt.bar(range(len(obtainedFile)), p_25, color = 'yellow',label='P@25%')
-plt.axhline(np.mean(p_25), color="yellow", linewidth=1)
+plt.axhline(np.mean(p_20), color="pink", linewidth=3)
+plt.bar(range(len(obtainedFile)), p_25, color = 'blue',label='P@25%')
+plt.axhline(np.mean(p_25), color="blue", linewidth=3)
 plt.legend(loc=1)
 plt.xlabel("Query ID")
 plt.ylabel("P@n")
