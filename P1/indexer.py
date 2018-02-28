@@ -158,9 +158,9 @@ elif corpus == "cf" :
 	indexer['tam_c'] = id.copy()	
 	indexer['avg']	= avg.copy()
 	indexer['M'] = n
-	for i in indexer:
-		print(i)
-		print(indexer[i])
+	# for i in indexer:
+		# print(i)
+		# print(indexer[i])
 	with open('indices/cf_indexer.dat', 'wb') as f:
 		json.dump(indexer, f, pickle.HIGHEST_PROTOCOL)	
 
