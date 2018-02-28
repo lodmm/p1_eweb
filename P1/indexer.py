@@ -162,6 +162,6 @@ elif corpus == "cf" :
 		# print(i)
 		# print(indexer[i])
 	with open('indices/cf_indexer.dat', 'wb') as f:
-		json.dump(indexer, f, pickle.HIGHEST_PROTOCOL)	
+		pickle.dump(indexer, f, pickle.HIGHEST_PROTOCOL)	
 
 		

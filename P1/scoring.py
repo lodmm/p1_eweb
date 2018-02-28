@@ -384,7 +384,7 @@ if not os.path.isfile(args.o):
 
 idealFile = json.load(open("corpora/" + args.c + "/json/qrels.json"))
 obtainedFile = json.load(open(args.o))
-pFiles = json.load(open("./" + args.c + "_ref_qresults.json"))
+pFiles = json.load(open("./results/" + args.c + "_ref_qresults.json"))
 f1 = []
 rt_l = []
 mr_l = []
@@ -502,7 +502,6 @@ while(True):
 plt.savefig(filename, bbox_inches="tight")
 plt.clf()
 gmap = get_g(map_m)
-print(gmap)
 plt.bar(range(len(obtainedFile)), map_m)
 plt.axhline(gmap, color="red", linewidth=1)
 plt.xlabel("Query ID")
